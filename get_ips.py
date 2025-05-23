@@ -76,7 +76,10 @@ def ssh_and_get_ip_addrs(ip):
         return f"{ip} {hostname} {' '.join(ipv4s)}"
 
     except Exception as e:
-        return f"{ip} ERROR: {str(e)}"
+        if "timed out" in str(e):
+            return f"{ip}"
+        else:
+            return f"{ip} ERROR: {str(e)}"
 
 if __name__ == "__main__":
     for ip in ip_to_list(ip_str):

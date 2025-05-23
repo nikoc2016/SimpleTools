@@ -29,8 +29,8 @@ zenlayer
 def ip_to_list(ip_str):
     return [line.strip() for line in ip_str.splitlines() if line.strip() and line.strip()[0].isdigit()]
 
-def extract_filtered_ipv4s(text):
-    """匹配 eth 接口后的几行中 inet 开头的 IP（去除 10.x），最终排序返回"""
+def extract_filtered_ipv4s(text, exclude_ip=None):
+    """匹配 eth 接口后的几行中 inet 开头的 IP（去除 10.x 和 ssh 的目标 IP），最终排序返回"""
     results = []
     lines = text.splitlines()
     for i, line in enumerate(lines):
@@ -44,9 +44,10 @@ def extract_filtered_ipv4s(text):
                     ip_match = re.search(r'inet (\d+\.\d+\.\d+\.\d+)', next_line)
                     if ip_match:
                         ip = ip_match.group(1)
-                        if not ip.startswith("10."):
+                        if not ip.startswith("10.") and ip != exclude_ip:
                             results.append(ip)
     return sorted(results)
+
 
 def ssh_and_get_ip_addrs(ip):
     try:
@@ -61,7 +62,7 @@ def ssh_and_get_ip_addrs(ip):
         if result.returncode != 0:
             return f"{ip} ERROR: {result.stderr.strip()}"
 
-        ipv4s = extract_filtered_ipv4s(result.stdout)
+        ipv4s = extract_filtered_ipv4s(result.stdout, exclude_ip=ip)
 
         # 获取主机名
         hostname_result = subprocess.run(

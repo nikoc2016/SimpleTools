@@ -27,17 +27,28 @@ zenlayer
 """
 
 def ip_to_list(ip_str):
-    return [line.strip() for line in ip_str.splitlines() if line.strip() and line.strip()[0].isnumeric()]
+    return [line.strip() for line in ip_str.splitlines() if line.strip() and line.strip()[0].isdigit()]
 
-def extract_ipv4s(text):
-    """从文本中提取所有 IPv4 地址"""
-    return re.findall(r'\b(?:\d{1,3}\.){3}\d{1,3}\b', text)
-
+def extract_filtered_ipv4s(text):
+    """从 ip addr 输出中提取 eth 接口下的非 10.x 段 IPv4 地址"""
+    results = []
+    current_interface = None
+    for line in text.splitlines():
+        line = line.strip()
+        iface_match = re.match(r'^\d+:\s+(eth\d+):', line)
+        if iface_match:
+            current_interface = iface_match.group(1)
+        elif current_interface and line.startswith("inet "):
+            ip_match = re.search(r'inet (\d+\.\d+\.\d+\.\d+)', line)
+            if ip_match:
+                ip = ip_match.group(1)
+                if not ip.startswith("10."):
+                    results.append(ip)
+    return results
 
 def ssh_and_get_ip_addrs(ip):
-    """通过 ssh 执行 `ip addr` 并提取所有 IPv4 地址"""
     try:
-        # 执行 SSH 命令，跳过 host key 检查
+        # 获取 ip addr
         result = subprocess.run(
             ["ssh", "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null", ip, "ip addr"],
             stdout=subprocess.PIPE,
@@ -48,7 +59,7 @@ def ssh_and_get_ip_addrs(ip):
         if result.returncode != 0:
             return f"{ip} ERROR: {result.stderr.strip()}"
 
-        ipv4s = extract_ipv4s(result.stdout)
+        ipv4s = extract_filtered_ipv4s(result.stdout)
 
         # 获取主机名
         hostname_result = subprocess.run(
@@ -64,7 +75,6 @@ def ssh_and_get_ip_addrs(ip):
 
     except Exception as e:
         return f"{ip} ERROR: {str(e)}"
-
 
 if __name__ == "__main__":
     for ip in ip_to_list(ip_str):

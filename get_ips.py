@@ -2,31 +2,8 @@ import subprocess
 import re
 
 # 示例 IP 列表，替换为你自己的列表
-ip_str = """
-kpy
-183.240.210.68
-183.240.210.71
-183.240.210.72
-183.240.210.73
-183.240.210.91
-183.240.210.94
-183.240.210.98
-183.240.210.105
-183.240.210.107
-183.240.210.116
-183.240.210.121
-
-
-zenlayer
-183.36.41.192
-120.241.158.59
-61.241.62.171
-183.36.41.75
-183.36.41.86
-120.240.171.224
-61.241.63.240
-61.241.62.175
-"""
+with open("get_ips.txt", "r") as f:
+    IP_STR = f.read()
 
 def ip_to_list(ip_str):
     return [line.strip() for line in ip_str.splitlines() if line.strip() and line.strip()[0].isdigit()]
@@ -85,5 +62,5 @@ def ssh_and_get_ip_addrs(ip):
             return f"{ip} ERROR: {str(e)}"
 
 if __name__ == "__main__":
-    for ip in ip_to_list(ip_str):
+    for ip in ip_to_list(IP_STR):
         print(ssh_and_get_ip_addrs(ip))

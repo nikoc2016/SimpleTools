@@ -30,21 +30,23 @@ def ip_to_list(ip_str):
     return [line.strip() for line in ip_str.splitlines() if line.strip() and line.strip()[0].isdigit()]
 
 def extract_filtered_ipv4s(text):
-    """从 ip addr 输出中提取 eth 接口下的非 10.x 段 IPv4 地址"""
+    """匹配 eth 接口后的几行中 inet 开头的 IP（去除 10.x），最终排序返回"""
     results = []
-    current_interface = None
-    for line in text.splitlines():
-        line = line.strip()
-        iface_match = re.match(r'^\d+:\s+(eth\d+):', line)
-        if iface_match:
-            current_interface = iface_match.group(1)
-        elif current_interface and line.startswith("inet "):
-            ip_match = re.search(r'inet (\d+\.\d+\.\d+\.\d+)', line)
-            if ip_match:
-                ip = ip_match.group(1)
-                if not ip.startswith("10."):
-                    results.append(ip)
-    return results
+    lines = text.splitlines()
+    for i, line in enumerate(lines):
+        if re.search(r'^\d+:\s+eth\d+', line.strip()):
+            # 检查接下来最多 5 行，寻找 inet 开头的 IPv4 地址
+            for j in range(1, 6):
+                if i + j >= len(lines):
+                    break
+                next_line = lines[i + j].strip()
+                if next_line.startswith("inet "):
+                    ip_match = re.search(r'inet (\d+\.\d+\.\d+\.\d+)', next_line)
+                    if ip_match:
+                        ip = ip_match.group(1)
+                        if not ip.startswith("10."):
+                            results.append(ip)
+    return sorted(results)
 
 def ssh_and_get_ip_addrs(ip):
     try:

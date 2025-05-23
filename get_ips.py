@@ -35,7 +35,7 @@ def ssh_and_get_ip_addrs(ip):
             ["ssh", "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null", ip, "ip addr"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            timeout=10,
+            timeout=2,
             text=True
         )
         if result.returncode != 0:

@@ -1,3 +1,4 @@
+import ipaddress
 import subprocess
 import re
 
@@ -23,7 +24,7 @@ def extract_filtered_ipv4s(text, exclude_ip=None):
                     ip_match = re.search(r'inet (\d+\.\d+\.\d+\.\d+)', next_line)
                     if ip_match:
                         ip = ip_match.group(1)
-                        if not ip.startswith("10.") and ip != exclude_ip:
+                        if not ipaddress.ip_address(ip).is_private and ip != exclude_ip:
                             results.append(ip)
     return sorted(results)
 
